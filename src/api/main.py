@@ -1,10 +1,33 @@
-import uvicorn
+from tickit.utils import generate_sequences, SequenceDataset
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
+from pathlib import Path
+import pandas as pd
 from typing import List
+
+from tickit.network import LSTMForecaster
+from torch.utils.data import DataLoader
+import torch
+
+
+model_path = str(Path(__file__).parent.parent/'reports/best.pth')
+
+
+def make_predictions(model, dataloader):
+  model.eval()
+  predictions, actuals = [], []
+  for x, y in dataloader:
+    with torch.no_grad():
+      p = model(x)
+      predictions.append(p)
+      actuals.append(y.squeeze())
+  predictions = torch.cat(predictions).numpy()
+  actuals = torch.cat(actuals).numpy()
+  return predictions.squeeze(), actuals
 
 
 app = FastAPI(title='API SALES FORECAST')
@@ -34,7 +57,30 @@ def root():
 @app.post("/predict/")
 async def predict(input: Historial):
 
-    pass
+    if input is not None:
+        answer = {'prediction':{}}
+
+        # get data
+        data = input.dict()
+        data = pd.DataFrame.from_dict(data)
+        sequences = generate_sequences(data, len(data), 7, 'qtysold')
+        dataset = SequenceDataset(sequences)
+        dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
+
+        # load model
+        model = LSTMForecaster(1, 50, 7, len(data), 'cpu', n_deep_layers=5)
+        checkpoint = torch.load(model_path)
+        model.load_state_dict(checkpoint['state_dict'])
+
+
+        prediction = make_predictions(model, dataloader)
+
+        answer = prediction 
+
+        return answer
+
+    else:
+        return {'answer': 'Model not found'}
 
 
 if __name__ == '__main__':

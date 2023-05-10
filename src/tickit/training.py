@@ -5,16 +5,23 @@ import torch
 from torch.utils.data import DataLoader
 import torch.utils.data as data
 import torch.nn as nn
+import matplotlib.pyplot as plt
+
+
+from pathlib import Path
+
+pathdata = str(Path(__file__).parent/'dataset/sales_tab.txt')
+pathout = str(Path(__file__).parent/'reports/')
 
 # Here we are defining properties for our model
-BATCH_SIZE = 16 # Training batch size
 split = 0.8 # Train/Test Split ratio
-steps_to_predict = 7
+sequence_len = 30 # training window (days)
+nout = 7 # Prediction window (days)
+BATCH_SIZE = 7 # Training batch size
 
-pathdata = "./dataset/sales_tab.txt"
 norm_df = preprocessing(pathdata)
 
-sequences = generate_sequences(norm_df.qtysold.to_frame(), len(norm_df), steps_to_predict, 'qtysold')
+sequences = generate_sequences(norm_df, sequence_len, nout, 'qtysold')
 dataset = SequenceDataset(sequences)
 
 # Split the data according to our split ratio and load each subset into a
@@ -22,15 +29,14 @@ dataset = SequenceDataset(sequences)
 train_len = int(len(dataset)*split)
 lens = [train_len, len(dataset)-train_len]
 train_ds, test_ds = data.random_split(dataset, lens)
+# at each iteration the DataLoader will yield (batch size) sequences with their associated 
+# targets which we will pass into the model
 trainloader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
 testloader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
 
 nhid = 50 # Number of nodes in the hidden layer
 n_dnn_layers = 5 # Number of hidden fully connected layers
-nout = steps_to_predict # Prediction Window
-sequence_len = len(norm_df) # Training Window
 
-# Number of features (since this is a univariate timeseries we'll set
 ninp = 1
 
 # Device selection (CPU | GPU)
@@ -42,7 +48,7 @@ model = LSTMForecaster(ninp, nhid, nout, sequence_len, device, n_deep_layers=n_d
 
 # Set learning rate and number of epochs to train over
 lr = 4e-4
-n_epochs = 20
+n_epochs = 30
 
 # Initialize the loss function and optimizer
 criterion = nn.MSELoss().to(device)
@@ -51,6 +57,7 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
 # Lists to store training and validation losses
 t_losses, v_losses = [], []
+worst_loss = 1000
 # Loop over epochs
 for epoch in range(n_epochs):
   train_loss, valid_loss = 0.0, 0.0
@@ -83,5 +90,22 @@ for epoch in range(n_epochs):
     valid_loss += error.item()
   valid_loss = valid_loss / len(testloader)
   v_losses.append(valid_loss)
-      
+  
+  if worst_loss > valid_loss:
+    worst_loss = valid_loss
+
+    state = {'epoch':epoch, 'state_dict':model.state_dict(),
+             'optimizer': optimizer.state_dict()}
+    torch.save(state, pathout + '/best.pth')
+
   print(f'{epoch} - train: {epoch_loss}, valid: {valid_loss}')
+
+## plotting
+plt.figure(figsize=(10,5))
+plt.title("Training and Validation Loss")
+plt.plot(v_losses,label="val")
+plt.plot(t_losses,label="train")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.legend()
+plt.savefig(pathout + '/training.png')

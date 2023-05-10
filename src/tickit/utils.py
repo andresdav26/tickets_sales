@@ -1,5 +1,6 @@
 import torch
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 
@@ -15,9 +16,6 @@ class SequenceDataset(torch.utils.data.Dataset):
   def __len__(self):
     return len(self.data)
   
-  import pandas as pd 
-from sklearn.preprocessing import StandardScaler
-
 
 def preprocessing(pathdata:str) -> pd.DataFrame:
 
@@ -48,7 +46,7 @@ def preprocessing(pathdata:str) -> pd.DataFrame:
 
 
 # Defining a function that creates sequences and targets as shown above
-def generate_sequences(df: pd.DataFrame, tw: int, pw: int, target_columns, drop_targets=False):
+def generate_sequences(df: pd.DataFrame, tw: int, pw: int, target_columns):
   '''
   df: Pandas DataFrame of the univariate time-series
   tw: Training Window - Integer defining how many steps to look back
@@ -58,14 +56,16 @@ def generate_sequences(df: pd.DataFrame, tw: int, pw: int, target_columns, drop_
   '''
   data = dict() # Store results into a dictionary
   L = len(df)
-  for i in range(L-tw):
-    # Option to drop target from dataframe
-    if drop_targets:
-      df.drop(target_columns, axis=1, inplace=True)
 
-    # Get current sequence  
-    sequence = df[i:i+tw].values
-    # Get values right after the current sequence
-    target = df[i+tw:i+tw+pw][target_columns].values
-    data[i] = {'sequence': sequence, 'target': target}
+  if L == tw: 
+     data[0] = {'sequence': df.values, 'target': np.array([])}
+
+  else:
+    for i in range(L-tw-pw+1):
+      # Get current sequence  
+      sequence = df[i:i+tw].values
+      # Get values right after the current sequence
+      target = df[i+tw:i+tw+pw][target_columns].values
+      data[i] = {'sequence': sequence, 'target': target}
+
   return data
