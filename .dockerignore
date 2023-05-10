@@ -1,0 +1,15 @@
+# ignore .git
+.git
+.gitignore
+
+# ignore .vscode
+.vscode
+
+**/__pycache__/
+**/*.png
+**/test
+**/*.ipynb
+
+**/*.csv
+**/training.py
+

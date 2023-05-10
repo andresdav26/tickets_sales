@@ -1,17 +1,10 @@
-import logging
 import uvicorn
-import pandas as pd
-import numpy as np
-import os
-import yaml
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from pathlib import Path
-from utils import preprocessing
 
-from typing import List, Optional, Union, Tuple, Any
+from typing import List
 
 
 app = FastAPI(title='API SALES FORECAST')
@@ -19,6 +12,7 @@ app = FastAPI(title='API SALES FORECAST')
 class Historial(BaseModel):
     saletime: List[str] = []
     qtysold: List[int] = []
+
 
 @app.get('/')
 def root():
