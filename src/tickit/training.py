@@ -99,7 +99,7 @@ for epoch in range(n_epochs):
     worst_loss = valid_loss
 
     state = {'epoch':epoch, 'state_dict':model.state_dict(),
-             'optimizer': optimizer.state_dict()}
+             'optimizer': optimizer.state_dict(), 'tw':sequence_len}
     torch.save(state, pathout + '/best.pth')
 
   print(f'{epoch} - train: {epoch_loss}, valid: {valid_loss}')
