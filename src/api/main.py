@@ -35,7 +35,6 @@ class Historial(BaseModel):
     saletime: List[str] = []
     
 
-
 @app.get('/')
 def root():
     html_content = """
@@ -52,36 +51,39 @@ def root():
     return HTMLResponse(content=html_content, status_code=200)
 
 
-
 @app.post("/predict/")
 async def predict(input: Historial):
 
     if input is not None:
+        answer = {'prediction':{}}
+        
+        # load model
+        # the model requires "sequence_len" (training window) samples to run.
+        # and predice 7 samples. 
+        checkpoint = torch.load(model_path)
+        sequence_len = checkpoint['tw']
+        model = LSTMForecaster(1, 50, 7, sequence_len, 'cpu', n_deep_layers=5)
+        model.load_state_dict(checkpoint['state_dict'])
 
         # get data
         data = input.dict()
         data = pd.DataFrame.from_dict(data)
         data = preprocessing_inference(data)
 
-        if len(data) < 30: 
-           return {'WarningError': 'At least 30 samples are required'}
+        if len(data) < sequence_len: 
+           return {'WarningError': 'At least "sequence_len" samples are required'}
         
-        # at least 30 samples are required.
-        data.drop(data.index[:-30], inplace=True)
+        # at least "sequence_len"" samples are required.
+        data.drop(data.index[:-sequence_len], inplace=True)
         sequences = generate_sequences(data, len(data), 7, 'qtysold')
         dataset = SequenceDataset(sequences)
         dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
 
-        # load model
-        # the model requires 30 (training window) samples to run.
-        # and predice 7 samples. 
-        model = LSTMForecaster(1, 50, 7, 30, 'cpu', n_deep_layers=5)
-        checkpoint = torch.load(model_path)
-        model.load_state_dict(checkpoint['state_dict'])
-
         prediction = make_predictions(model, dataloader)
+        for ans in range(len(prediction)):
+            answer['prediction'][f'day {ans+1}'] = str(prediction[ans])
 
-        return {'prediction': list(prediction)}
+        return answer
 
     else:
         return {'WarningError': 'Model not found'}
