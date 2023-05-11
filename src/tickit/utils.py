@@ -17,11 +17,7 @@ class SequenceDataset(torch.utils.data.Dataset):
     return len(self.data)
   
 
-def preprocessing(pathdata:str) -> pd.DataFrame:
-
-    sales = pd.read_csv(pathdata, sep='\t', header = None, encoding= 'utf-8')
-    sales.columns =['salesid','listid','sellerid','buyerid','eventid','dateid','qtysold','pricepaid','commission','saletime']
-    data = sales[['qtysold', 'saletime']]
+def preprocessing(data:pd.DataFrame) -> pd.DataFrame:
 
     data['saletime'] = pd.to_datetime(data['saletime'])
     data['saletime'] = data['saletime'].dt.strftime('%Y-%m-%d')
@@ -44,6 +40,16 @@ def preprocessing(pathdata:str) -> pd.DataFrame:
 
     return norm_df
 
+def preprocessing_inference(data:pd.DataFrame) -> pd.DataFrame:
+
+    data['saletime'] = pd.to_datetime(data['saletime'])
+    data['saletime'] = data['saletime'].dt.strftime('%Y-%m-%d')
+    data['saletime'] = data['saletime'].astype('datetime64[ns]')
+    data = data.set_index('saletime')
+    data = data.sort_index()
+    daily = data.resample('D').sum()
+    
+    return daily
 
 # Defining a function that creates sequences and targets as shown above
 def generate_sequences(df: pd.DataFrame, tw: int, pw: int, target_columns):

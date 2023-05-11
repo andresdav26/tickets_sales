@@ -7,7 +7,7 @@ import torch.utils.data as data
 import torch.nn as nn
 import matplotlib.pyplot as plt
 
-
+import pandas as pd
 from pathlib import Path
 
 pathdata = str(Path(__file__).parent/'dataset/sales_tab.txt')
@@ -19,7 +19,11 @@ sequence_len = 30 # training window (days)
 nout = 7 # Prediction window (days)
 BATCH_SIZE = 7 # Training batch size
 
-norm_df = preprocessing(pathdata)
+# load and preprocess data
+sales = pd.read_csv(pathdata, sep='\t', header = None, encoding= 'utf-8')
+sales.columns =['salesid','listid','sellerid','buyerid','eventid','dateid','qtysold','pricepaid','commission','saletime']
+df = sales[['qtysold', 'saletime']]
+norm_df = preprocessing(df)
 
 sequences = generate_sequences(norm_df, sequence_len, nout, 'qtysold')
 dataset = SequenceDataset(sequences)
