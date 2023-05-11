@@ -7,9 +7,7 @@
 
 **/__pycache__/
 **/*.png
-**/test
 **/*.ipynb
 
-**/*.csv
 **/training.py
 

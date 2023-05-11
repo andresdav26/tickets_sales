@@ -18,6 +18,6 @@ WORKDIR /Users/USUARIO/Documents/challenger_chiper/
 ENV PYTHONPATH=$PYTHONPATH:/Users/USUARIO/Documents/challenger_chiper/
 COPY api/. .
 
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "80800", "--log-config", "./src/api/logging.conf"]
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-config", "./src/api/logging.conf"]
 
 
