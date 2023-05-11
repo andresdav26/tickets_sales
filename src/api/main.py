@@ -57,6 +57,7 @@ def root():
 async def predict(input: Historial):
 
     if input is not None:
+        answer = {'prediction':{}}
 
         # get data
         data = input.dict()
@@ -80,8 +81,10 @@ async def predict(input: Historial):
         model.load_state_dict(checkpoint['state_dict'])
 
         prediction = make_predictions(model, dataloader)
+        for ans in range(len(prediction)):
+            answer['prediction'][f'day {ans+1}'] = str(prediction[ans])
 
-        return {'prediction': list(prediction)}
+        return answer
 
     else:
         return {'WarningError': 'Model not found'}
