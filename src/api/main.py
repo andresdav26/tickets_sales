@@ -62,7 +62,7 @@ async def predict(input: Historial):
         # and predice 7 samples. 
         checkpoint = torch.load(model_path)
         sequence_len = checkpoint['tw']
-        model = LSTMForecaster(1, 50, 7, sequence_len, 'cpu', n_deep_layers=5)
+        model = LSTMForecaster(1, 50, 7, sequence_len, 'cpu', n_deep_layers=10)
         model.load_state_dict(checkpoint['state_dict'])
 
         # get data

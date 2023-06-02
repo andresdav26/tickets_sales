@@ -36,10 +36,10 @@ train_ds, test_ds = data.random_split(dataset, lens)
 # at each iteration the DataLoader will yield (batch size) sequences with their associated 
 # targets which we will pass into the model
 trainloader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
-testloader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
+testloader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=False, drop_last=False)
 
 nhid = 50 # Number of nodes in the hidden layer
-n_dnn_layers = 5 # Number of hidden fully connected layers
+n_dnn_layers = 10 # Number of hidden fully connected layers
 
 ninp = 1
 
@@ -52,11 +52,11 @@ model = LSTMForecaster(ninp, nhid, nout, sequence_len, device, n_deep_layers=n_d
 
 # Set learning rate and number of epochs to train over
 lr = 4e-4
-n_epochs = 30
+n_epochs = 50
 
 # Initialize the loss function and optimizer
 criterion = nn.MSELoss().to(device)
-optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
 
 # Lists to store training and validation losses
