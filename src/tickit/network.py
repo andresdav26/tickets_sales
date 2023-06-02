@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class LSTMForecaster(nn.Module):
 
-  def __init__(self, n_features, n_hidden, n_outputs, sequence_len, device, n_lstm_layers=1, n_deep_layers=10, use_cuda=False, dropout=0.2):
+  def __init__(self, n_features, n_hidden, n_outputs, sequence_len, device, n_lstm_layers=1, n_deep_layers=10, use_cuda=False, dropout=0.0):
     '''
     n_features: number of input features (1 for univariate forecasting)
     n_hidden: number of neurons in each hidden layer
